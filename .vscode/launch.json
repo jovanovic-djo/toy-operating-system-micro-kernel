@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+        "name": "Run Kernel (QEMU)",
+        "type": "node",
+        "request": "launch",
+        "program": "qemu-system-x86_64",
+        "args": ["-cdrom", "build/os.iso"],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal"
+    }
+  ]
+}
