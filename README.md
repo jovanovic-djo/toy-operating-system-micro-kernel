@@ -1,2 +1,2 @@
-# toy-operating-system-mini-kernel
-just a pet project
+# toy-operating-system-micro-kernel
+[pet project]
