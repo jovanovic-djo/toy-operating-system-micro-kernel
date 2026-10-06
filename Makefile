@@ -2,14 +2,14 @@ CC = gcc
 AS = as
 LD = ld
 
-INCLUDES = -Idrivers/core -Idrivers/keyborad -Idrivers/vga
+INCLUDES = -Idrivers/core -Idrivers/keyboard -Idrivers/vga
 CFLAGS = -ffreestanding -m32 -c $(INCLUDES)
 ASFLAGS = --32
 LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
          drivers/core/idt.c \
-         drivers/keyborad/keyboard.c \
+         drivers/keyboard/keyboard.c \
          drivers/vga/vga.c
 OBJS = src/arch/boot.o $(C_SRCS:.c=.o)
 
