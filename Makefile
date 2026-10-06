@@ -1,28 +1,46 @@
 CC = gcc
-ASM = nasm
+AS = as
 LD = ld
 
-CFLAGS = -ffreestanding -m32 -c
+INCLUDES = -Idrivers/core -Idrivers/keyboard -Idrivers/vga
+CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
+         -fno-pie -fno-stack-protector -Wall -Wextra -c $(INCLUDES)
+ASFLAGS = --32
 LDFLAGS = -T linker.ld -m elf_i386
 
-all: build/kernel.bin iso
+C_SRCS = src/kernel/kernel.c \
+         drivers/core/idt.c \
+         drivers/keyboard/keyboard.c \
+         drivers/vga/vga.c
+ASM_SRCS = src/arch/boot.s \
+           src/arch/interrupts.s
+OBJS = $(ASM_SRCS:.s=.o) $(C_SRCS:.c=.o)
 
-build/kernel.bin: kernel.o boot.o
-	$(LD) $(LDFLAGS) $^ -o $@
+.PHONY: all iso run clean
 
-kernel.o: kernel.c
+all: iso
+
+build:
+	mkdir -p $@
+
+build/kernel.bin: $(OBJS) | build
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+
+%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-boot.o: boot.s
-	$(ASM) -f elf32 $< -o $@
+%.o: %.s
+	$(AS) $(ASFLAGS) $< -o $@
 
-iso:
+iso: build/os.iso
+
+build/os.iso: build/kernel.bin iso/boot/grub/grub.cfg
 	mkdir -p iso/boot/grub
 	cp build/kernel.bin iso/boot/
-	grub-mkrescue -o build/os.iso iso
+	grub-mkrescue -o $@ iso
 
-run:
+run: build/os.iso
 	qemu-system-x86_64 -cdrom build/os.iso
 
 clean:
-	rm -rf build/*.o build/*.bin build/*.iso
+	rm -rf $(OBJS) build/*.o build/*.bin build/*.iso
