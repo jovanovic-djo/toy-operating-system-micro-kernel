@@ -32,6 +32,17 @@ void vga_putc(char c) {
         return;
     }
 
+    if (c == '\b') {
+        if (col > 0) {
+            col--;
+        } else if (row > 0) {
+            row--;
+            col = VGA_WIDTH - 1;
+        }
+        VGA_MEMORY[row * VGA_WIDTH + col] = vga_entry(' ');
+        return;
+    }
+
     VGA_MEMORY[row * VGA_WIDTH + col] = vga_entry(c);
 
     col++;
