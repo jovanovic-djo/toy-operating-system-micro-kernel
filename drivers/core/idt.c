@@ -9,6 +9,7 @@
 #define PIC1_DATA 0x21
 #define PIC2_CMD  0xA0
 #define PIC2_DATA 0xA1
+#define PIC_EOI   0x20
 
 struct idt_entry {
     uint16_t offset_low;
@@ -58,6 +59,20 @@ static void pic_remap(void) {
     /* Mask every IRQ; drivers unmask their own line once a handler is installed. */
     outb(PIC1_DATA, 0xFF);
     outb(PIC2_DATA, 0xFF);
+}
+
+void pic_unmask_irq(uint8_t irq) {
+    uint16_t port = irq < 8 ? PIC1_DATA : PIC2_DATA;
+    outb(port, inb(port) & ~(1 << (irq % 8)));
+
+    if (irq >= 8)
+        pic_unmask_irq(2); /* slave IRQs arrive through the cascade line */
+}
+
+void pic_send_eoi(uint8_t irq) {
+    if (irq >= 8)
+        outb(PIC2_CMD, PIC_EOI);
+    outb(PIC1_CMD, PIC_EOI);
 }
 
 void idt_init(void) {

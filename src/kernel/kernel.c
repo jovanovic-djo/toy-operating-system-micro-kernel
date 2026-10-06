@@ -8,6 +8,7 @@ void kernel_main() {
 
     idt_init();
     keyboard_init();
+    __asm__ volatile ("sti");
 
     vga_print("~:\n");
 

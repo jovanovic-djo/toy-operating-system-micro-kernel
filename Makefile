@@ -12,7 +12,9 @@ C_SRCS = src/kernel/kernel.c \
          drivers/core/idt.c \
          drivers/keyboard/keyboard.c \
          drivers/vga/vga.c
-OBJS = src/arch/boot.o $(C_SRCS:.c=.o)
+ASM_SRCS = src/arch/boot.s \
+           src/arch/interrupts.s
+OBJS = $(ASM_SRCS:.s=.o) $(C_SRCS:.c=.o)
 
 .PHONY: all iso run clean
 
@@ -27,7 +29,7 @@ build/kernel.bin: $(OBJS) | build
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-src/arch/boot.o: src/arch/boot.s
+%.o: %.s
 	$(AS) $(ASFLAGS) $< -o $@
 
 iso: build/os.iso
