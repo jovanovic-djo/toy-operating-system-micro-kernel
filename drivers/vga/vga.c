@@ -25,10 +25,22 @@ void vga_init(void) {
     vga_clear();
 }
 
+static void vga_scroll(void) {
+    for (int i = 0; i < VGA_WIDTH * (VGA_HEIGHT - 1); i++)
+        VGA_MEMORY[i] = VGA_MEMORY[i + VGA_WIDTH];
+
+    for (int i = 0; i < VGA_WIDTH; i++)
+        VGA_MEMORY[(VGA_HEIGHT - 1) * VGA_WIDTH + i] = vga_entry(' ');
+
+    row = VGA_HEIGHT - 1;
+}
+
 void vga_putc(char c) {
     if (c == '\n') {
         row++;
         col = 0;
+        if (row >= VGA_HEIGHT)
+            vga_scroll();
         return;
     }
 
@@ -49,6 +61,8 @@ void vga_putc(char c) {
     if (col >= VGA_WIDTH) {
         col = 0;
         row++;
+        if (row >= VGA_HEIGHT)
+            vga_scroll();
     }
 }
 
