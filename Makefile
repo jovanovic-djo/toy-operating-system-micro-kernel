@@ -2,18 +2,25 @@ CC = gcc
 ASM = nasm
 LD = ld
 
-CFLAGS = -ffreestanding -m32 -c
+INCLUDES = -Idrivers/core -Idrivers/keyborad -Idrivers/vga
+CFLAGS = -ffreestanding -m32 -c $(INCLUDES)
 LDFLAGS = -T linker.ld -m elf_i386
+
+C_SRCS = src/kernel/kernel.c \
+         drivers/core/idt.c \
+         drivers/keyborad/keyboard.c \
+         drivers/vga/vga.c
+OBJS = src/arch/boot.o $(C_SRCS:.c=.o)
 
 all: build/kernel.bin iso
 
-build/kernel.bin: kernel.o boot.o
+build/kernel.bin: $(OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
-kernel.o: kernel.c
+%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-boot.o: boot.s
+src/arch/boot.o: src/arch/boot.s
 	$(ASM) -f elf32 $< -o $@
 
 iso:
@@ -25,4 +32,4 @@ run:
 	qemu-system-x86_64 -cdrom build/os.iso
 
 clean:
-	rm -rf build/*.o build/*.bin build/*.iso
+	rm -rf $(OBJS) build/*.o build/*.bin build/*.iso
