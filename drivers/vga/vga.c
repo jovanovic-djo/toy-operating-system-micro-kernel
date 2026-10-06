@@ -14,9 +14,10 @@
 
 static int row = 0;
 static int col = 0;
+static uint8_t color = VGA_COLOR;
 
 static uint16_t vga_entry(char c) {
-    return (uint16_t)(uint8_t)c | (uint16_t)VGA_COLOR << 8;
+    return (uint16_t)(uint8_t)c | (uint16_t)color << 8;
 }
 
 static void vga_update_cursor(void) {
@@ -91,4 +92,16 @@ void vga_print(const char* str) {
     while (*str) {
         vga_putc(*str++);
     }
+}
+
+void vga_print_hex(uint32_t value) {
+    static const char digits[] = "0123456789ABCDEF";
+
+    vga_print("0x");
+    for (int shift = 28; shift >= 0; shift -= 4)
+        vga_putc(digits[(value >> shift) & 0xF]);
+}
+
+void vga_set_color(uint8_t fg, uint8_t bg) {
+    color = (bg << 4) | (fg & 0x0F);
 }
