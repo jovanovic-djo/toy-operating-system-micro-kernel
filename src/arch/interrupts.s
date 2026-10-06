@@ -1,15 +1,4 @@
 .section .text
-.global irq1_stub
-.extern keyboard_handler
-
-# C functions may clobber eax/ecx/edx and expect DF clear,
-# so save all general registers and return with iret.
-irq1_stub:
-    pusha
-    cld
-    call keyboard_handler
-    popa
-    iret
 
 # Every vector gets a stub that pushes the same frame: an error code
 # (a dummy 0 when the CPU does not push one) and the vector number.
@@ -41,6 +30,8 @@ isr\num:
 
 .extern isr_dispatch
 
+# C functions may clobber eax/ecx/edx and expect DF clear,
+# so save all general registers and return with iret.
 isr_common:
     pusha
     cld
