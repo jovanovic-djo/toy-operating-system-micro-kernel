@@ -1,11 +1,19 @@
+#include <stdint.h>
 #include "vga.h"
-#define VGA_MEMORY ((char*)0xB8000)
 
+#define VGA_MEMORY ((volatile uint16_t*)0xB8000)
+#define VGA_WIDTH  80
+#define VGA_HEIGHT 25
+#define VGA_COLOR  0x07 /* light grey on black */
 
 static int row = 0;
 static int col = 0;
 
-void vga_init() {
+static uint16_t vga_entry(char c) {
+    return (uint16_t)(uint8_t)c | (uint16_t)VGA_COLOR << 8;
+}
+
+void vga_init(void) {
     row = 0;
     col = 0;
 }
@@ -17,12 +25,10 @@ void vga_putc(char c) {
         return;
     }
 
-    int index = (row * 80 + col) * 2;
-    VGA_MEMORY[index] = c;
-    VGA_MEMORY[index + 1] = 0x07;
+    VGA_MEMORY[row * VGA_WIDTH + col] = vga_entry(c);
 
     col++;
-    if (col >= 80) {
+    if (col >= VGA_WIDTH) {
         col = 0;
         row++;
     }
