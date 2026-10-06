@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "vga.h"
+#include "io.h"
 
 char keymap[128] = {
     0, 27, '1','2','3','4','5','6','7','8','9','0','-','=',

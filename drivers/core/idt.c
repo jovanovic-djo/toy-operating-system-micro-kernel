@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "io.h"
 
 
 void idt_init() {
