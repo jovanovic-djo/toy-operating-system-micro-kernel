@@ -3,7 +3,8 @@ AS = as
 LD = ld
 
 INCLUDES = -Idrivers/core -Idrivers/keyboard -Idrivers/vga
-CFLAGS = -ffreestanding -m32 -c $(INCLUDES)
+CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
+         -fno-pie -fno-stack-protector -Wall -Wextra -c $(INCLUDES)
 ASFLAGS = --32
 LDFLAGS = -T linker.ld -m elf_i386
 
