@@ -17,8 +17,11 @@ OBJS = src/arch/boot.o $(C_SRCS:.c=.o)
 
 all: iso
 
-build/kernel.bin: $(OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+build:
+	mkdir -p $@
+
+build/kernel.bin: $(OBJS) | build
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
