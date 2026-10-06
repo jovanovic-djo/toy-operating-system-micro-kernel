@@ -2,6 +2,7 @@
 #define VGA_H
 
 void vga_init(void);
+void vga_clear(void);
 void vga_putc(char c);
 void vga_print(const char* str);
 

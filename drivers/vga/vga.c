@@ -13,9 +13,16 @@ static uint16_t vga_entry(char c) {
     return (uint16_t)(uint8_t)c | (uint16_t)VGA_COLOR << 8;
 }
 
-void vga_init(void) {
+void vga_clear(void) {
+    for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++)
+        VGA_MEMORY[i] = vga_entry(' ');
+
     row = 0;
     col = 0;
+}
+
+void vga_init(void) {
+    vga_clear();
 }
 
 void vga_putc(char c) {
