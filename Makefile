@@ -1,9 +1,10 @@
 CC = gcc
-ASM = nasm
+AS = as
 LD = ld
 
 INCLUDES = -Idrivers/core -Idrivers/keyborad -Idrivers/vga
 CFLAGS = -ffreestanding -m32 -c $(INCLUDES)
+ASFLAGS = --32
 LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
@@ -21,7 +22,7 @@ build/kernel.bin: $(OBJS)
 	$(CC) $(CFLAGS) $< -o $@
 
 src/arch/boot.o: src/arch/boot.s
-	$(ASM) -f elf32 $< -o $@
+	$(AS) $(ASFLAGS) $< -o $@
 
 iso:
 	mkdir -p iso/boot/grub
