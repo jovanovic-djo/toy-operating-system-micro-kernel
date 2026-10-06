@@ -10,6 +10,7 @@ LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
          drivers/core/idt.c \
+         drivers/core/isr.c \
          drivers/keyboard/keyboard.c \
          drivers/vga/vga.c
 ASM_SRCS = src/arch/boot.s \

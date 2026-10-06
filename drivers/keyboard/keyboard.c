@@ -1,15 +1,13 @@
 #include <stdint.h>
 #include "keyboard.h"
 #include "idt.h"
+#include "isr.h"
 #include "vga.h"
 #include "io.h"
 
 #define KEYBOARD_DATA   0x60
 #define KEYBOARD_STATUS 0x64
 #define KEYBOARD_IRQ    1
-#define IRQ_BASE        0x20
-
-extern void irq1_stub(void);
 
 static const char keymap[128] = {
     0, 27, '1','2','3','4','5','6','7','8','9','0','-','=',
@@ -19,7 +17,8 @@ static const char keymap[128] = {
     '*', 0, ' ',
 };
 
-void keyboard_handler(void) {
+static void keyboard_handler(struct registers* regs) {
+    (void)regs;
     uint8_t scancode = inb(KEYBOARD_DATA);
 
     if (scancode < 128) {
@@ -27,8 +26,6 @@ void keyboard_handler(void) {
         if (c)
             vga_putc(c);
     }
-
-    pic_send_eoi(KEYBOARD_IRQ);
 }
 
 void keyboard_init(void) {
@@ -36,6 +33,6 @@ void keyboard_init(void) {
     while (inb(KEYBOARD_STATUS) & 1)
         inb(KEYBOARD_DATA);
 
-    idt_set_gate(IRQ_BASE + KEYBOARD_IRQ, (uint32_t)irq1_stub);
+    register_interrupt_handler(IRQ(KEYBOARD_IRQ), keyboard_handler);
     pic_unmask_irq(KEYBOARD_IRQ);
 }
