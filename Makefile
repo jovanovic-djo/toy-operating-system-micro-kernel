@@ -4,8 +4,8 @@ LD = ld
 
 INCLUDES = -Idrivers/core -Idrivers/keyboard -Idrivers/vga
 CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
-         -fno-pie -fno-stack-protector -Wall -Wextra -c $(INCLUDES)
-ASFLAGS = --32 --noexecstack
+         -fno-pie -fno-stack-protector -Wall -Wextra -g -c $(INCLUDES)
+ASFLAGS = --32 --noexecstack -g
 LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
@@ -19,7 +19,7 @@ OBJS = $(ASM_SRCS:.s=.o) $(C_SRCS:.c=.o)
 
 QEMU = qemu-system-i386
 
-.PHONY: all iso run run-iso clean
+.PHONY: all iso run run-iso debug clean
 
 all: build/kernel.bin
 
@@ -48,6 +48,10 @@ run: build/kernel.bin
 
 run-iso: build/os.iso
 	$(QEMU) -cdrom $<
+
+# Start paused with a GDB server on localhost:1234 (see .vscode/launch.json).
+debug: build/kernel.bin
+	$(QEMU) -kernel $< -s -S
 
 clean:
 	rm -rf $(OBJS) build/*.o build/*.bin build/*.iso
