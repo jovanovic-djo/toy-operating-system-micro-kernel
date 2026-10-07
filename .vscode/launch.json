@@ -2,13 +2,19 @@
   "version": "0.2.0",
   "configurations": [
     {
-        "name": "Run Kernel (QEMU)",
-        "type": "node",
+        "name": "Debug Kernel (QEMU + GDB)",
+        "type": "cppdbg",
         "request": "launch",
-        "program": "qemu-system-x86_64",
-        "args": ["-cdrom", "build/os.iso"],
+        "program": "${workspaceFolder}/build/kernel.bin",
         "cwd": "${workspaceFolder}",
-        "console": "integratedTerminal"
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "miDebuggerServerAddress": "localhost:1234",
+        "stopAtEntry": false,
+        "preLaunchTask": "Start QEMU (debug)",
+        "setupCommands": [
+            { "text": "set architecture i386" }
+        ]
     }
   ]
 }

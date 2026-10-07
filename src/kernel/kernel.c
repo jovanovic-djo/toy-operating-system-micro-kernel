@@ -3,7 +3,7 @@
 #include "isr.h"
 #include "keyboard.h"
 
-void kernel_main() {
+void kernel_main(void) {
     vga_init();
     vga_print("System started\n");
 
