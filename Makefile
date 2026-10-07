@@ -17,9 +17,11 @@ ASM_SRCS = src/arch/boot.s \
            src/arch/interrupts.s
 OBJS = $(ASM_SRCS:.s=.o) $(C_SRCS:.c=.o)
 
-.PHONY: all iso run clean
+QEMU = qemu-system-i386
 
-all: iso
+.PHONY: all iso run run-iso clean
+
+all: build/kernel.bin
 
 build:
 	mkdir -p $@
@@ -40,8 +42,12 @@ build/os.iso: build/kernel.bin iso/boot/grub/grub.cfg
 	cp build/kernel.bin iso/boot/
 	grub-mkrescue -o $@ iso
 
-run: build/os.iso
-	qemu-system-x86_64 -cdrom build/os.iso
+# QEMU loads Multiboot kernels directly, so GRUB is only needed for the ISO.
+run: build/kernel.bin
+	$(QEMU) -kernel $<
+
+run-iso: build/os.iso
+	$(QEMU) -cdrom $<
 
 clean:
 	rm -rf $(OBJS) build/*.o build/*.bin build/*.iso
