@@ -2,7 +2,6 @@
 #include "keyboard.h"
 #include "idt.h"
 #include "isr.h"
-#include "vga.h"
 #include "io.h"
 
 #define KEYBOARD_DATA   0x60
@@ -30,8 +29,23 @@ static const char keymap_shift[128] = {
     '*', 0, ' ',
 };
 
+#define BUFFER_SIZE     128
+
 static int shift_held = 0;
 static int caps_lock = 0;
+
+/* Ring buffer filled by the IRQ handler and drained by keyboard_getchar(). */
+static char buffer[BUFFER_SIZE];
+static volatile unsigned head = 0;
+static volatile unsigned tail = 0;
+
+static void buffer_push(char c) {
+    unsigned next = (head + 1) % BUFFER_SIZE;
+    if (next != tail) { /* drop the key when full */
+        buffer[head] = c;
+        head = next;
+    }
+}
 
 static char translate(uint8_t scancode) {
     char c = keymap[scancode];
@@ -65,7 +79,21 @@ static void keyboard_handler(struct registers* regs) {
     if (scancode < SC_RELEASE) {
         char c = translate(scancode);
         if (c)
-            vga_putc(c);
+            buffer_push(c);
+    }
+}
+
+char keyboard_getchar(void) {
+    for (;;) {
+        __asm__ volatile ("cli");
+        if (head != tail) {
+            char c = buffer[tail];
+            tail = (tail + 1) % BUFFER_SIZE;
+            __asm__ volatile ("sti");
+            return c;
+        }
+        /* sti takes effect after the next instruction, so no key can slip in before hlt. */
+        __asm__ volatile ("sti; hlt");
     }
 }
 

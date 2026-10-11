@@ -17,6 +17,6 @@ void kernel_main(void) {
     vga_print("~:\n");
 
     while (1) {
-        __asm__("hlt");
+        vga_putc(keyboard_getchar());
     }
 }
