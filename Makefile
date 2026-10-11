@@ -12,6 +12,7 @@ C_SRCS = src/kernel/kernel.c \
          src/kernel/kprintf.c \
          src/kernel/shell.c \
          src/lib/string.c \
+         drivers/core/gdt.c \
          drivers/core/idt.c \
          drivers/core/isr.c \
          drivers/keyboard/keyboard.c \

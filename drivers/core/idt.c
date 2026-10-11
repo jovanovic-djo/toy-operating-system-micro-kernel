@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "idt.h"
+#include "gdt.h"
 #include "io.h"
 
 #define IDT_ENTRIES 256
@@ -27,16 +28,9 @@ struct idt_ptr {
 static struct idt_entry idt[IDT_ENTRIES];
 static struct idt_ptr idtr;
 
-/* GRUB's GDT layout is not specified, so use whatever code segment we run in. */
-static uint16_t code_selector(void) {
-    uint16_t cs;
-    __asm__ volatile ("mov %%cs, %0" : "=r"(cs));
-    return cs;
-}
-
 void idt_set_gate(uint8_t vector, uint32_t handler) {
     idt[vector].offset_low  = handler & 0xFFFF;
-    idt[vector].selector    = code_selector();
+    idt[vector].selector    = GDT_KERNEL_CODE;
     idt[vector].zero        = 0;
     idt[vector].type_attr   = IDT_INTERRUPT_GATE;
     idt[vector].offset_high = (handler >> 16) & 0xFFFF;
