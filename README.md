@@ -7,8 +7,10 @@ A small 32-bit x86 hobby kernel, written in C and GNU assembly, booted via Multi
 - Multiboot boot (GRUB or QEMU `-kernel`) with its own 16 KiB stack
 - IDT with a generic ISR/IRQ dispatcher (`register_interrupt_handler`)
 - Panic screen for unhandled CPU exceptions with a register dump
-- PS/2 keyboard driver (IRQ1, US layout, lowercase only)
-- VGA text console with scrolling, backspace and a hardware cursor
+- PS/2 keyboard driver (IRQ1, US layout, Shift and Caps Lock, buffered input)
+- PIT timer at 100 Hz with `timer_sleep()`
+- VGA text console with scrolling, backspace, a hardware cursor and `kprintf`
+- Interactive shell with `help`, `clear`, `echo`, `uptime` and `reboot`
 
 ## Requirements
 
@@ -52,9 +54,11 @@ gdb build/kernel.bin -ex "target remote localhost:1234" -ex "break kernel_main" 
 
 ```
 src/arch/       boot entry (boot.s) and interrupt stubs (interrupts.s)
-src/kernel/     kernel_main
+src/kernel/     kernel_main, shell, kprintf
+src/lib/        string and memory functions
 drivers/core/   IDT, PIC, ISR/IRQ dispatch, port I/O
 drivers/keyboard/
+drivers/timer/  PIT
 drivers/vga/
 iso/boot/grub/  GRUB config used by `make iso`
 linker.ld       kernel memory layout (loaded at 1 MiB)

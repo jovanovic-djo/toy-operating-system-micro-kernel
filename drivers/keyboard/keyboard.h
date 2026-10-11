@@ -3,4 +3,7 @@
 
 void keyboard_init(void);
 
+/* Blocks until a key is pressed. Requires interrupts to be enabled. */
+char keyboard_getchar(void);
+
 #endif

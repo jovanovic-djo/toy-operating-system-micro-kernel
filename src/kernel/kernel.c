@@ -2,6 +2,8 @@
 #include "idt.h"
 #include "isr.h"
 #include "keyboard.h"
+#include "timer.h"
+#include "shell.h"
 
 void kernel_main(void) {
     vga_init();
@@ -10,11 +12,8 @@ void kernel_main(void) {
     idt_init();
     isr_init();
     keyboard_init();
+    timer_init();
     __asm__ volatile ("sti");
 
-    vga_print("~:\n");
-
-    while (1) {
-        __asm__("hlt");
-    }
+    shell_run();
 }
