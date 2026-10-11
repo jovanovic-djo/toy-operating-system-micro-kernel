@@ -88,9 +88,12 @@ void isr_dispatch(struct registers* regs) {
     interrupt_handler_t handler = handlers[regs->int_no];
 
     if (regs->int_no >= IRQ_BASE) {
+        uint8_t irq = regs->int_no - IRQ_BASE;
+        if (pic_is_spurious(irq))
+            return;
         if (handler)
             handler(regs);
-        pic_send_eoi(regs->int_no - IRQ_BASE);
+        pic_send_eoi(irq);
         return;
     }
 
