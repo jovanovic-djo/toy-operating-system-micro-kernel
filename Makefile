@@ -2,13 +2,14 @@ CC = gcc
 AS = as
 LD = ld
 
-INCLUDES = -Idrivers/core -Idrivers/keyboard -Idrivers/vga
+INCLUDES = -Isrc/kernel -Idrivers/core -Idrivers/keyboard -Idrivers/vga
 CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
          -fno-pie -fno-stack-protector -Wall -Wextra -g -c $(INCLUDES)
 ASFLAGS = --32 --noexecstack -g
 LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
+         src/kernel/kprintf.c \
          drivers/core/idt.c \
          drivers/core/isr.c \
          drivers/keyboard/keyboard.c \
