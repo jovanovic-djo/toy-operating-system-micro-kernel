@@ -3,6 +3,7 @@
 #include "isr.h"
 #include "keyboard.h"
 #include "timer.h"
+#include "shell.h"
 
 void kernel_main(void) {
     vga_init();
@@ -14,9 +15,5 @@ void kernel_main(void) {
     timer_init();
     __asm__ volatile ("sti");
 
-    vga_print("~:\n");
-
-    while (1) {
-        vga_putc(keyboard_getchar());
-    }
+    shell_run();
 }

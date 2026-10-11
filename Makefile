@@ -10,6 +10,7 @@ LDFLAGS = -T linker.ld -m elf_i386
 
 C_SRCS = src/kernel/kernel.c \
          src/kernel/kprintf.c \
+         src/kernel/shell.c \
          src/lib/string.c \
          drivers/core/idt.c \
          drivers/core/isr.c \
