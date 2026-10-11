@@ -4,8 +4,9 @@ A small 32-bit x86 hobby kernel, written in C and GNU assembly, booted via Multi
 
 ## Features
 
-- Multiboot boot (GRUB or QEMU `-kernel`) with its own 16 KiB stack
-- IDT with a generic ISR/IRQ dispatcher (`register_interrupt_handler`)
+- Multiboot boot (GRUB or QEMU `-kernel`) with its own 16 KiB stack and GDT
+- Reads the memory size reported by the bootloader
+- IDT with a generic ISR/IRQ dispatcher (`register_interrupt_handler`) that ignores spurious IRQs
 - Panic screen for unhandled CPU exceptions with a register dump
 - PS/2 keyboard driver (IRQ1, US layout, Shift and Caps Lock, buffered input)
 - PIT timer at 100 Hz with `timer_sleep()`
@@ -54,9 +55,9 @@ gdb build/kernel.bin -ex "target remote localhost:1234" -ex "break kernel_main" 
 
 ```
 src/arch/       boot entry (boot.s) and interrupt stubs (interrupts.s)
-src/kernel/     kernel_main, shell, kprintf
+src/kernel/     kernel_main, Multiboot info, shell, kprintf
 src/lib/        string and memory functions
-drivers/core/   IDT, PIC, ISR/IRQ dispatch, port I/O
+drivers/core/   GDT, IDT, PIC, ISR/IRQ dispatch, port I/O
 drivers/keyboard/
 drivers/timer/  PIT
 drivers/vga/
