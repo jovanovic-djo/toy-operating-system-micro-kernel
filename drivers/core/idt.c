@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "idt.h"
+#include "gdt.h"
 #include "io.h"
 
 #define IDT_ENTRIES 256
@@ -10,6 +11,7 @@
 #define PIC2_CMD  0xA0
 #define PIC2_DATA 0xA1
 #define PIC_EOI   0x20
+#define PIC_READ_ISR 0x0B /* OCW3: next command-port read returns the in-service register */
 
 struct idt_entry {
     uint16_t offset_low;
@@ -27,16 +29,9 @@ struct idt_ptr {
 static struct idt_entry idt[IDT_ENTRIES];
 static struct idt_ptr idtr;
 
-/* GRUB's GDT layout is not specified, so use whatever code segment we run in. */
-static uint16_t code_selector(void) {
-    uint16_t cs;
-    __asm__ volatile ("mov %%cs, %0" : "=r"(cs));
-    return cs;
-}
-
 void idt_set_gate(uint8_t vector, uint32_t handler) {
     idt[vector].offset_low  = handler & 0xFFFF;
-    idt[vector].selector    = code_selector();
+    idt[vector].selector    = GDT_KERNEL_CODE;
     idt[vector].zero        = 0;
     idt[vector].type_attr   = IDT_INTERRUPT_GATE;
     idt[vector].offset_high = (handler >> 16) & 0xFFFF;
@@ -73,6 +68,26 @@ void pic_send_eoi(uint8_t irq) {
     if (irq >= 8)
         outb(PIC2_CMD, PIC_EOI);
     outb(PIC1_CMD, PIC_EOI);
+}
+
+/*
+ * The PIC raises IRQ 7 (master) or IRQ 15 (slave) when an interrupt line drops
+ * before the CPU acknowledges it. Such an IRQ is not marked in-service and
+ * must not get an EOI from that PIC, or a real interrupt would be cleared.
+ */
+int pic_is_spurious(uint8_t irq) {
+    if (irq != 7 && irq != 15)
+        return 0;
+
+    uint16_t cmd = irq == 7 ? PIC1_CMD : PIC2_CMD;
+    outb(cmd, PIC_READ_ISR);
+    if (inb(cmd) & 0x80)
+        return 0;
+
+    /* The master did see the cascade interrupt from the slave, so it still needs one. */
+    if (irq == 15)
+        outb(PIC1_CMD, PIC_EOI);
+    return 1;
 }
 
 void idt_init(void) {
