@@ -8,14 +8,16 @@
 #include "keyboard.h"
 #include "timer.h"
 #include "shell.h"
+#include "pmm.h"
 
 void kernel_main(uint32_t magic, const struct multiboot_info* info) {
     vga_init();
     vga_print("System started\n");
     if (!multiboot_init(magic, info))
         kprintf("Warning: not booted by a Multiboot loader (magic %x)\n", magic);
-    else if (info->flags & MULTIBOOT_INFO_MEMORY)
-        kprintf("Memory: %u KiB lower, %u KiB upper\n", info->mem_lower, info->mem_upper);
+    pmm_init();
+    kprintf("Memory: %u KiB usable, %u KiB free\n",
+            pmm_total_pages() * (PAGE_SIZE / 1024), pmm_free_pages() * (PAGE_SIZE / 1024));
 
     gdt_init();
     idt_init();
