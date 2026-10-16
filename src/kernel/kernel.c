@@ -9,19 +9,13 @@
 #include "timer.h"
 #include "shell.h"
 
-static void print_memory(uint32_t magic, const struct multiboot_info* info) {
-    if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        kprintf("Warning: not booted by a Multiboot loader (magic %x)\n", magic);
-        return;
-    }
-    if (info->flags & MULTIBOOT_INFO_MEMORY)
-        kprintf("Memory: %u KiB lower, %u KiB upper\n", info->mem_lower, info->mem_upper);
-}
-
 void kernel_main(uint32_t magic, const struct multiboot_info* info) {
     vga_init();
     vga_print("System started\n");
-    print_memory(magic, info);
+    if (!multiboot_init(magic, info))
+        kprintf("Warning: not booted by a Multiboot loader (magic %x)\n", magic);
+    else if (info->flags & MULTIBOOT_INFO_MEMORY)
+        kprintf("Memory: %u KiB lower, %u KiB upper\n", info->mem_lower, info->mem_upper);
 
     gdt_init();
     idt_init();
