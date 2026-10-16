@@ -13,6 +13,7 @@ C_SRCS = src/kernel/kernel.c \
          src/kernel/multiboot.c \
          src/kernel/shell.c \
          src/lib/string.c \
+         src/mm/heap.c \
          src/mm/paging.c \
          src/mm/pmm.c \
          drivers/core/gdt.c \

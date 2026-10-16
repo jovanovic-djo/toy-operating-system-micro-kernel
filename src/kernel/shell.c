@@ -8,6 +8,7 @@
 #include "io.h"
 #include "multiboot.h"
 #include "pmm.h"
+#include "heap.h"
 
 #define PROMPT      "~: "
 #define LINE_MAX    128
@@ -66,6 +67,10 @@ static void cmd_mem(const char* args) {
     multiboot_print_memory_map();
     kprintf("%u of %u pages free (%u KiB)\n",
             pmm_free_pages(), pmm_total_pages(), pmm_free_pages() * (PAGE_SIZE / 1024));
+
+    uint32_t used, mapped;
+    heap_stats(&used, &mapped);
+    kprintf("heap: %u bytes in use, %u KiB mapped\n", used, mapped / 1024);
 }
 
 static void cmd_reboot(const char* args) {
