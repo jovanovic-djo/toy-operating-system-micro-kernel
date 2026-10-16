@@ -5,13 +5,14 @@ A small 32-bit x86 hobby kernel, written in C and GNU assembly, booted via Multi
 ## Features
 
 - Multiboot boot (GRUB or QEMU `-kernel`) with its own 16 KiB stack and GDT
-- Reads the memory size reported by the bootloader
+- Memory management: Multiboot memory map, bitmap page allocator, paging with an
+  identity-mapped kernel (page 0 unmapped to catch NULL pointers) and a `kmalloc`/`kfree` heap
 - IDT with a generic ISR/IRQ dispatcher (`register_interrupt_handler`) that ignores spurious IRQs
-- Panic screen for unhandled CPU exceptions with a register dump
+- Panic screen for unhandled CPU exceptions with a register dump (and CR2 for page faults)
 - PS/2 keyboard driver (IRQ1, US layout, Shift and Caps Lock, buffered input)
 - PIT timer at 100 Hz with `timer_sleep()`
 - VGA text console with scrolling, backspace, a hardware cursor and `kprintf`
-- Interactive shell with `help`, `clear`, `echo`, `uptime` and `reboot`
+- Interactive shell with `help`, `clear`, `echo`, `uptime`, `mem` and `reboot`
 
 ## Requirements
 
@@ -57,6 +58,7 @@ gdb build/kernel.bin -ex "target remote localhost:1234" -ex "break kernel_main" 
 src/arch/       boot entry (boot.s) and interrupt stubs (interrupts.s)
 src/kernel/     kernel_main, Multiboot info, shell, kprintf
 src/lib/        string and memory functions
+src/mm/         page allocator, paging, kernel heap
 drivers/core/   GDT, IDT, PIC, ISR/IRQ dispatch, port I/O
 drivers/keyboard/
 drivers/timer/  PIT
