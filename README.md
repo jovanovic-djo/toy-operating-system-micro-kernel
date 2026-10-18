@@ -9,10 +9,12 @@ A small 32-bit x86 hobby kernel, written in C and GNU assembly, booted via Multi
   identity-mapped kernel (page 0 unmapped to catch NULL pointers) and a `kmalloc`/`kfree` heap
 - IDT with a generic ISR/IRQ dispatcher (`register_interrupt_handler`) that ignores spurious IRQs
 - Panic screen for unhandled CPU exceptions with a register dump (and CR2 for page faults)
+- Kernel threads with a preemptive round-robin scheduler (50 ms time slices on the timer),
+  an idle thread, `thread_sleep` and automatic cleanup of exited threads
 - PS/2 keyboard driver (IRQ1, US layout, Shift and Caps Lock, buffered input)
 - PIT timer at 100 Hz with `timer_sleep()`
 - VGA text console with scrolling, backspace, a hardware cursor and `kprintf`
-- Interactive shell with `help`, `clear`, `echo`, `uptime`, `mem` and `reboot`
+- Interactive shell with `help`, `clear`, `echo`, `uptime`, `mem`, `ps`, `spawn` and `reboot`
 
 ## Requirements
 
@@ -55,8 +57,8 @@ gdb build/kernel.bin -ex "target remote localhost:1234" -ex "break kernel_main" 
 ## Project layout
 
 ```
-src/arch/       boot entry (boot.s) and interrupt stubs (interrupts.s)
-src/kernel/     kernel_main, Multiboot info, shell, kprintf
+src/arch/       boot entry (boot.s), interrupt stubs (interrupts.s), context switch (switch.s)
+src/kernel/     kernel_main, Multiboot info, threads and scheduler, shell, kprintf
 src/lib/        string and memory functions
 src/mm/         page allocator, paging, kernel heap
 drivers/core/   GDT, IDT, PIC, ISR/IRQ dispatch, port I/O
