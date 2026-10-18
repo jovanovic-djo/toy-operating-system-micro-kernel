@@ -28,6 +28,10 @@ isr\num:
     ISR_NOERR \num
 .endr
 
+# System calls (int $0x80); the gate is installed by syscall_init.
+.global isr128
+ISR_NOERR 128
+
 .extern isr_dispatch
 
 # C functions may clobber eax/ecx/edx and expect DF clear, so save all

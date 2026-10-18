@@ -2,7 +2,7 @@ CC = gcc
 AS = as
 LD = ld
 
-INCLUDES = -Isrc/kernel -Isrc/lib -Isrc/mm -Idrivers/core -Idrivers/keyboard -Idrivers/timer -Idrivers/vga
+INCLUDES = -I. -Isrc/kernel -Isrc/lib -Isrc/mm -Idrivers/core -Idrivers/keyboard -Idrivers/timer -Idrivers/vga
 CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
          -fno-pie -fno-stack-protector -Wall -Wextra -g -c -MMD -MP $(INCLUDES)
 ASFLAGS = --32 --noexecstack -g
@@ -12,6 +12,7 @@ C_SRCS = src/kernel/kernel.c \
          src/kernel/kprintf.c \
          src/kernel/multiboot.c \
          src/kernel/shell.c \
+         src/kernel/syscall.c \
          src/kernel/thread.c \
          src/lib/string.c \
          src/mm/heap.c \

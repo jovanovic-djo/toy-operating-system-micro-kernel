@@ -5,6 +5,7 @@
 
 #define IDT_ENTRIES 256
 #define IDT_INTERRUPT_GATE 0x8E /* present, ring 0, 32-bit interrupt gate */
+#define IDT_USER_GATE      0xEE /* same, but user mode may raise it with int */
 
 #define PIC1_CMD  0x20
 #define PIC1_DATA 0x21
@@ -29,12 +30,20 @@ struct idt_ptr {
 static struct idt_entry idt[IDT_ENTRIES];
 static struct idt_ptr idtr;
 
-void idt_set_gate(uint8_t vector, uint32_t handler) {
+static void set_gate(uint8_t vector, uint32_t handler, uint8_t type_attr) {
     idt[vector].offset_low  = handler & 0xFFFF;
     idt[vector].selector    = GDT_KERNEL_CODE;
     idt[vector].zero        = 0;
-    idt[vector].type_attr   = IDT_INTERRUPT_GATE;
+    idt[vector].type_attr   = type_attr;
     idt[vector].offset_high = (handler >> 16) & 0xFFFF;
+}
+
+void idt_set_gate(uint8_t vector, uint32_t handler) {
+    set_gate(vector, handler, IDT_INTERRUPT_GATE);
+}
+
+void idt_set_user_gate(uint8_t vector, uint32_t handler) {
+    set_gate(vector, handler, IDT_USER_GATE);
 }
 
 /* Move IRQ 0-15 to vectors 0x20-0x2F so they don't collide with CPU exceptions. */
