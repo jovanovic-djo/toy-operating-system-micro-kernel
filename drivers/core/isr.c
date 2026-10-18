@@ -2,10 +2,12 @@
 #include "isr.h"
 #include "idt.h"
 #include "vga.h"
+#include "kprintf.h"
 
 extern uint32_t isr_stub_table[ISR_COUNT];
 
-static interrupt_handler_t handlers[ISR_COUNT];
+static interrupt_handler_t handlers[256];
+static user_fault_handler_t user_fault_handler;
 
 void isr_init(void) {
     for (int i = 0; i < ISR_COUNT; i++)
@@ -13,8 +15,11 @@ void isr_init(void) {
 }
 
 void register_interrupt_handler(uint8_t vector, interrupt_handler_t handler) {
-    if (vector < ISR_COUNT)
-        handlers[vector] = handler;
+    handlers[vector] = handler;
+}
+
+void set_user_fault_handler(user_fault_handler_t handler) {
+    user_fault_handler = handler;
 }
 
 #define PAGE_FAULT 14
@@ -43,8 +48,8 @@ static void print_reg(const char* name, uint32_t value) {
 }
 
 static void exception_panic(struct registers* regs) {
-    /* Same-privilege faults push no SS:ESP, so the interrupted stack starts right after the frame. */
-    uint32_t fault_esp = (uint32_t)regs + sizeof(struct registers);
+    /* Kernel-mode faults push no SS:ESP, so the interrupted stack starts where user_esp would be. */
+    uint32_t fault_esp = FROM_USER(regs) ? regs->user_esp : (uint32_t)&regs->user_esp;
 
     vga_set_color(VGA_WHITE, VGA_RED);
     vga_clear();
@@ -87,7 +92,7 @@ static void exception_panic(struct registers* regs) {
 void isr_dispatch(struct registers* regs) {
     interrupt_handler_t handler = handlers[regs->int_no];
 
-    if (regs->int_no >= IRQ_BASE) {
+    if (regs->int_no >= IRQ_BASE && regs->int_no < IRQ_BASE + IRQ_COUNT) {
         uint8_t irq = regs->int_no - IRQ_BASE;
         if (pic_is_spurious(irq))
             return;
@@ -104,6 +109,17 @@ void isr_dispatch(struct registers* regs) {
 
     if (handler) {
         handler(regs);
+        return;
+    }
+
+    if (regs->int_no >= IRQ_BASE) {
+        kprintf("unhandled interrupt %u\n", regs->int_no);
+        return;
+    }
+
+    /* A faulting user program only takes itself down. */
+    if (FROM_USER(regs) && user_fault_handler) {
+        user_fault_handler(regs, exception_names[regs->int_no]);
         return;
     }
 

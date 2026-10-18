@@ -5,6 +5,8 @@
 
 void idt_init(void);
 void idt_set_gate(uint8_t vector, uint32_t handler);
+/* A gate user mode may trigger with int, e.g. for system calls. */
+void idt_set_user_gate(uint8_t vector, uint32_t handler);
 
 void pic_unmask_irq(uint8_t irq);
 void pic_send_eoi(uint8_t irq);

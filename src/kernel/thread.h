@@ -19,6 +19,7 @@ struct thread {
     void (*entry)(void* arg);
     void* arg;
     void* stack;               /* kmalloc'd stack, NULL for the boot thread */
+    uint32_t* page_dir;        /* own address space, or NULL for the kernel's */
     struct thread* next;       /* circular list of all threads */
 };
 

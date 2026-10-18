@@ -10,6 +10,7 @@
 #include "pmm.h"
 #include "heap.h"
 #include "thread.h"
+#include "process.h"
 
 #define PROMPT      "~: "
 #define LINE_MAX    128
@@ -31,6 +32,7 @@ static void cmd_uptime(const char* args);
 static void cmd_mem(const char* args);
 static void cmd_ps(const char* args);
 static void cmd_spawn(const char* args);
+static void cmd_run(const char* args);
 static void cmd_reboot(const char* args);
 
 static const struct command commands[] = {
@@ -41,6 +43,7 @@ static const struct command commands[] = {
     { "mem",    "show the memory map",     cmd_mem },
     { "ps",     "list threads",            cmd_ps },
     { "spawn",  "start a demo thread (spawn [busy])", cmd_spawn },
+    { "run",    "run a user program (run <name>)",    cmd_run },
     { "reboot", "restart the machine",     cmd_reboot },
 };
 
@@ -113,6 +116,26 @@ static void cmd_spawn(const char* args) {
                                : thread_create("worker", worker, NULL);
     if (t)
         kprintf("started thread %u\n", t->id);
+    else
+        kprintf("out of memory\n");
+}
+
+static void cmd_run(const char* args) {
+    const struct program* program = program_find(args);
+
+    if (!program) {
+        if (*args)
+            kprintf("no such program: %s\n", args);
+        kprintf("programs:");
+        for (unsigned i = 0; i < program_count; i++)
+            kprintf(" %s", programs[i].name);
+        kprintf("\n");
+        return;
+    }
+
+    struct thread* t = process_spawn(program);
+    if (t)
+        kprintf("started process %u\n", t->id);
     else
         kprintf("out of memory\n");
 }
