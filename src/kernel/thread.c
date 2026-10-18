@@ -7,6 +7,7 @@
 #include "kprintf.h"
 #include "string.h"
 #include "gdt.h"
+#include "paging.h"
 
 #define STACK_SIZE 16384
 #define SLICE_MS   50 /* time a thread runs before the timer switches away */
@@ -45,6 +46,8 @@ static void reap(void) {
             continue;
         }
         t->next = victim->next;
+        if (victim->page_dir)
+            paging_destroy_directory(victim->page_dir);
         if (victim != &boot_thread) {
             kfree(victim->stack);
             kfree(victim);
@@ -70,6 +73,7 @@ static void schedule(void) {
     /* Interrupts from user mode must land on the new thread's own kernel stack. */
     if (next->stack)
         tss_set_kernel_stack((uint32_t)next->stack + STACK_SIZE);
+    paging_switch(next->page_dir);
     context_switch(&prev->esp, next->esp);
 }
 
@@ -145,6 +149,7 @@ struct thread* thread_create(const char* name, void (*entry)(void* arg), void* a
     t->entry = entry;
     t->arg = arg;
     t->stack = stack;
+    t->page_dir = NULL;
 
     uint32_t flags = irq_save();
     t->id = next_id++;
