@@ -42,4 +42,7 @@ void thread_exit(void) __attribute__((noreturn));
 
 struct thread* thread_current(void);
 
+/* List all threads with their state. */
+void threads_print(void);
+
 #endif

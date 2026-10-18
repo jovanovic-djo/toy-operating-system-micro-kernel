@@ -9,6 +9,7 @@
 #include "multiboot.h"
 #include "pmm.h"
 #include "heap.h"
+#include "thread.h"
 
 #define PROMPT      "~: "
 #define LINE_MAX    128
@@ -28,6 +29,8 @@ static void cmd_clear(const char* args);
 static void cmd_echo(const char* args);
 static void cmd_uptime(const char* args);
 static void cmd_mem(const char* args);
+static void cmd_ps(const char* args);
+static void cmd_spawn(const char* args);
 static void cmd_reboot(const char* args);
 
 static const struct command commands[] = {
@@ -36,6 +39,8 @@ static const struct command commands[] = {
     { "echo",   "print the given text",    cmd_echo },
     { "uptime", "time since boot",         cmd_uptime },
     { "mem",    "show the memory map",     cmd_mem },
+    { "ps",     "list threads",            cmd_ps },
+    { "spawn",  "start a demo thread (spawn [busy])", cmd_spawn },
     { "reboot", "restart the machine",     cmd_reboot },
 };
 
@@ -71,6 +76,45 @@ static void cmd_mem(const char* args) {
     uint32_t used, mapped;
     heap_stats(&used, &mapped);
     kprintf("heap: %u bytes in use, %u KiB mapped\n", used, mapped / 1024);
+}
+
+static void cmd_ps(const char* args) {
+    (void)args;
+    threads_print();
+}
+
+/* Prints a few times in the background, sleeping in between. */
+static void worker(void* arg) {
+    (void)arg;
+    uint32_t id = thread_current()->id;
+    for (int i = 1; i <= 3; i++) {
+        thread_sleep(1000);
+        kprintf("[thread %u] tick %d/3\n", id, i);
+    }
+}
+
+/* Never yields, so only preemption keeps the shell responsive meanwhile. */
+static void busy(void* arg) {
+    (void)arg;
+    uint32_t start = timer_ticks();
+    while (timer_ticks() - start < 5 * TIMER_HZ)
+        ;
+    kprintf("[thread %u] busy loop done\n", thread_current()->id);
+}
+
+static void cmd_spawn(const char* args) {
+    int is_busy = strcmp(args, "busy") == 0;
+    if (*args && !is_busy) {
+        kprintf("usage: spawn [busy]\n");
+        return;
+    }
+
+    struct thread* t = is_busy ? thread_create("busy", busy, NULL)
+                               : thread_create("worker", worker, NULL);
+    if (t)
+        kprintf("started thread %u\n", t->id);
+    else
+        kprintf("out of memory\n");
 }
 
 static void cmd_reboot(const char* args) {

@@ -4,6 +4,8 @@
 #include "heap.h"
 #include "irq.h"
 #include "timer.h"
+#include "kprintf.h"
+#include "string.h"
 
 #define STACK_SIZE 16384
 #define SLICE_MS   50 /* time a thread runs before the timer switches away */
@@ -151,6 +153,22 @@ struct thread* thread_create(const char* name, void (*entry)(void* arg), void* a
 void thread_yield(void) {
     uint32_t flags = irq_save();
     schedule();
+    irq_restore(flags);
+}
+
+void threads_print(void) {
+    static const char* states[] = { "ready", "running", "sleeping", "dead" };
+
+    uint32_t flags = irq_save();
+    kprintf("  id  state     name\n");
+    struct thread* t = current;
+    do {
+        kprintf("  %2u  %s", t->id, states[t->state]);
+        for (int pad = 10 - (int)strlen(states[t->state]); pad > 0; pad--)
+            kprintf(" ");
+        kprintf("%s\n", t->name);
+        t = t->next;
+    } while (t != current);
     irq_restore(flags);
 }
 
