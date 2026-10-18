@@ -31,8 +31,28 @@ static struct thread* pick_next(void) {
     return idle_thread;
 }
 
+/* Free threads that have exited, except the current one whose stack we are still on. */
+static void reap(void) {
+    struct thread* t = current;
+
+    while (t->next != current) {
+        struct thread* victim = t->next;
+        if (victim->state != THREAD_DEAD) {
+            t = victim;
+            continue;
+        }
+        t->next = victim->next;
+        if (victim != &boot_thread) {
+            kfree(victim->stack);
+            kfree(victim);
+        }
+    }
+}
+
 /* Switch to the next thread. Interrupts must be off. */
 static void schedule(void) {
+    reap();
+
     struct thread* prev = current;
     struct thread* next = pick_next();
 
@@ -60,9 +80,29 @@ static void idle(void* arg) {
         __asm__ volatile ("hlt");
 }
 
+/* Make sleeping threads whose time has come ready; returns 1 if any woke up. */
+static int wake_sleepers(void) {
+    uint32_t now = timer_ticks();
+    int woke = 0;
+    struct thread* t = current;
+
+    do {
+        /* Signed difference keeps working when the tick counter wraps around. */
+        if (t->state == THREAD_SLEEPING && (int32_t)(now - t->wake_tick) >= 0) {
+            t->state = THREAD_READY;
+            woke = 1;
+        }
+        t = t->next;
+    } while (t != current);
+    return woke;
+}
+
 /* Runs in the timer interrupt, so interrupts are already off. */
 static void thread_tick(void) {
-    if (++slice_ticks >= SLICE_MS * TIMER_HZ / 1000)
+    int woke = wake_sleepers();
+
+    /* Leave idle as soon as there is work; otherwise switch when the time slice is used up. */
+    if ((woke && current == idle_thread) || ++slice_ticks >= SLICE_MS * TIMER_HZ / 1000)
         schedule();
 }
 
@@ -114,7 +154,15 @@ void thread_yield(void) {
     irq_restore(flags);
 }
 
-/* The thread's memory is not reclaimed yet; it stays in the list as dead. */
+void thread_sleep(uint32_t ms) {
+    uint32_t flags = irq_save();
+    current->wake_tick = timer_ticks() + (ms * TIMER_HZ + 999) / 1000;
+    current->state = THREAD_SLEEPING;
+    schedule();
+    irq_restore(flags);
+}
+
+/* The scheduler frees the thread once it has switched to another one. */
 void thread_exit(void) {
     irq_save();
     current->state = THREAD_DEAD;
