@@ -10,6 +10,7 @@
 #include "shell.h"
 #include "pmm.h"
 #include "paging.h"
+#include "thread.h"
 
 void kernel_main(uint32_t magic, const struct multiboot_info* info) {
     vga_init();
@@ -18,6 +19,7 @@ void kernel_main(uint32_t magic, const struct multiboot_info* info) {
         kprintf("Warning: not booted by a Multiboot loader (magic %x)\n", magic);
     pmm_init();
     paging_init();
+    threads_init();
     kprintf("Memory: %u KiB usable, %u KiB free\n",
             pmm_total_pages() * (PAGE_SIZE / 1024), pmm_free_pages() * (PAGE_SIZE / 1024));
 
