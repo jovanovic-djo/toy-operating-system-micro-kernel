@@ -25,4 +25,8 @@ typedef void (*interrupt_handler_t)(struct registers* regs);
 void isr_init(void);
 void register_interrupt_handler(uint8_t vector, interrupt_handler_t handler);
 
+/* Called instead of the kernel panic for an unhandled CPU exception raised by user code. */
+typedef void (*user_fault_handler_t)(struct registers* regs, const char* exception);
+void set_user_fault_handler(user_fault_handler_t handler);
+
 #endif

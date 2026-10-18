@@ -7,6 +7,7 @@
 extern uint32_t isr_stub_table[ISR_COUNT];
 
 static interrupt_handler_t handlers[256];
+static user_fault_handler_t user_fault_handler;
 
 void isr_init(void) {
     for (int i = 0; i < ISR_COUNT; i++)
@@ -15,6 +16,10 @@ void isr_init(void) {
 
 void register_interrupt_handler(uint8_t vector, interrupt_handler_t handler) {
     handlers[vector] = handler;
+}
+
+void set_user_fault_handler(user_fault_handler_t handler) {
+    user_fault_handler = handler;
 }
 
 #define PAGE_FAULT 14
@@ -109,6 +114,12 @@ void isr_dispatch(struct registers* regs) {
 
     if (regs->int_no >= IRQ_BASE) {
         kprintf("unhandled interrupt %u\n", regs->int_no);
+        return;
+    }
+
+    /* A faulting user program only takes itself down. */
+    if (FROM_USER(regs) && user_fault_handler) {
+        user_fault_handler(regs, exception_names[regs->int_no]);
         return;
     }
 

@@ -6,9 +6,12 @@
 #include "layout.h"
 #include "irq.h"
 #include "string.h"
+#include "isr.h"
+#include "kprintf.h"
 
 #define USER_STACK_TOP  USER_END
 #define USER_STACK_SIZE (16 * 1024)
+#define PAGE_FAULT      14
 
 void enter_user_mode(uint32_t eip, uint32_t esp) __attribute__((noreturn)); /* usermode.s */
 
@@ -30,6 +33,21 @@ static int map_user_range(uint32_t* dir, uint32_t virt, uint32_t size, const uin
         }
     }
     return 1;
+}
+
+static void kill_on_fault(struct registers* regs, const char* exception) {
+    kprintf("[thread %u killed: %s at %x", thread_current()->id, exception, regs->eip);
+    if (regs->int_no == PAGE_FAULT) {
+        uint32_t cr2;
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+        kprintf(", address %x", cr2);
+    }
+    kprintf("]\n");
+    thread_exit();
+}
+
+void process_init(void) {
+    set_user_fault_handler(kill_on_fault);
 }
 
 static void user_entry(void* arg) {

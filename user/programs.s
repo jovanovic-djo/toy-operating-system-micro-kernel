@@ -10,3 +10,4 @@ user_\name\()_end:
 .endm
 
 PROGRAM hello
+PROGRAM fault

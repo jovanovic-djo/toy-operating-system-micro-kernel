@@ -6,11 +6,13 @@
 #define PROGRAM(name) \
     extern const uint8_t user_##name##_start[], user_##name##_end[];
 PROGRAM(hello)
+PROGRAM(fault)
 #undef PROGRAM
 
 #define PROGRAM(name) { #name, user_##name##_start, user_##name##_end }
 const struct program programs[] = {
     PROGRAM(hello),
+    PROGRAM(fault),
 };
 #undef PROGRAM
 

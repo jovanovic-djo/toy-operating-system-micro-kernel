@@ -34,7 +34,7 @@ ASM_SRCS = src/arch/boot.s \
 
 # User programs: each is linked at USER_START with the small runtime in user/,
 # turned into a flat binary and embedded in the kernel by user/programs.s.
-USER_PROGRAMS = hello
+USER_PROGRAMS = hello fault
 USER_CFLAGS = -m32 -ffreestanding -fno-builtin -nostdlib \
               -fno-pie -fno-stack-protector -Wall -Wextra -g -c -MMD -MP -I. -Iuser
 USER_LIB = user/crt0.o user/ulib.o

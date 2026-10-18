@@ -11,4 +11,7 @@
  */
 struct thread* process_spawn(const struct program* program);
 
+/* End user programs that raise a CPU exception instead of panicking. Call after isr_init. */
+void process_init(void);
+
 #endif

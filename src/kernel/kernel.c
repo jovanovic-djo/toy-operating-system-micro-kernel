@@ -12,6 +12,7 @@
 #include "paging.h"
 #include "thread.h"
 #include "syscall.h"
+#include "process.h"
 
 void kernel_main(uint32_t magic, const struct multiboot_info* info) {
     vga_init();
@@ -28,6 +29,7 @@ void kernel_main(uint32_t magic, const struct multiboot_info* info) {
     idt_init();
     isr_init();
     syscall_init();
+    process_init();
     keyboard_init();
     timer_init();
     __asm__ volatile ("sti");
