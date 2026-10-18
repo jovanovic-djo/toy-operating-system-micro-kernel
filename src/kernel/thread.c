@@ -6,6 +6,7 @@
 #include "timer.h"
 #include "kprintf.h"
 #include "string.h"
+#include "gdt.h"
 
 #define STACK_SIZE 16384
 #define SLICE_MS   50 /* time a thread runs before the timer switches away */
@@ -66,6 +67,9 @@ static void schedule(void) {
         prev->state = THREAD_READY;
     next->state = THREAD_RUNNING;
     current = next;
+    /* Interrupts from user mode must land on the new thread's own kernel stack. */
+    if (next->stack)
+        tss_set_kernel_stack((uint32_t)next->stack + STACK_SIZE);
     context_switch(&prev->esp, next->esp);
 }
 
