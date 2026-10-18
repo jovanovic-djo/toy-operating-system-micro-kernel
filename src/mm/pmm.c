@@ -3,6 +3,7 @@
 #include "multiboot.h"
 #include "kprintf.h"
 #include "string.h"
+#include "irq.h"
 
 #define PAGE_SHIFT 12
 #define MAX_PAGES  (1u << 20) /* 4 GiB / 4 KiB */
@@ -75,7 +76,7 @@ void pmm_init(void) {
     }
 }
 
-uint32_t pmm_alloc_page(void) {
+static uint32_t alloc_page(void) {
     for (uint32_t n = 0; n < MAX_PAGES / 32; n++) {
         uint32_t i = (search_from + n) % (MAX_PAGES / 32);
         if (bitmap[i] == 0xFFFFFFFF)
@@ -92,7 +93,7 @@ uint32_t pmm_alloc_page(void) {
     return 0;
 }
 
-void pmm_free_page(uint32_t addr) {
+static void free_page(uint32_t addr) {
     uint32_t page = addr / PAGE_SIZE;
 
     /* The bitmap cannot tell allocated pages from reserved ones, so reject the known reserved ranges. */
@@ -107,6 +108,19 @@ void pmm_free_page(uint32_t addr) {
     free_count++;
     if (page / 32 < search_from)
         search_from = page / 32;
+}
+
+uint32_t pmm_alloc_page(void) {
+    uint32_t flags = irq_save();
+    uint32_t addr = alloc_page();
+    irq_restore(flags);
+    return addr;
+}
+
+void pmm_free_page(uint32_t addr) {
+    uint32_t flags = irq_save();
+    free_page(addr);
+    irq_restore(flags);
 }
 
 uint32_t pmm_free_pages(void) {

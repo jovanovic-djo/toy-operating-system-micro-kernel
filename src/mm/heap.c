@@ -4,6 +4,7 @@
 #include "paging.h"
 #include "pmm.h"
 #include "kprintf.h"
+#include "irq.h"
 
 /* Virtual range for the heap, above the identity-mapped RAM. */
 #define HEAP_START 0xE0000000
@@ -93,7 +94,7 @@ static void split(struct block* b, uint32_t size) {
     b->next = rest;
 }
 
-void* kmalloc(size_t size) {
+static void* heap_alloc(size_t size) {
     if (size == 0 || size > HEAP_LIMIT - HEAP_START)
         return NULL;
     size = (size + ALIGN - 1) & ~(ALIGN - 1);
@@ -111,10 +112,7 @@ void* kmalloc(size_t size) {
     return b + 1;
 }
 
-void kfree(void* ptr) {
-    if (!ptr)
-        return;
-
+static void heap_free(void* ptr) {
     struct block* b = (struct block*)ptr - 1;
     if ((uint32_t)b < HEAP_START || (uint32_t)ptr >= heap_end || (uint32_t)ptr % ALIGN ||
         b->magic != BLOCK_MAGIC || b->free) {
@@ -133,10 +131,29 @@ void kfree(void* ptr) {
     }
 }
 
+/* The heap is shared by every thread, so keep interrupts (and thread switches) out. */
+void* kmalloc(size_t size) {
+    uint32_t flags = irq_save();
+    void* ptr = heap_alloc(size);
+    irq_restore(flags);
+    return ptr;
+}
+
+void kfree(void* ptr) {
+    if (!ptr)
+        return;
+
+    uint32_t flags = irq_save();
+    heap_free(ptr);
+    irq_restore(flags);
+}
+
 void heap_stats(uint32_t* used, uint32_t* mapped) {
+    uint32_t flags = irq_save();
     *used = 0;
     for (struct block* b = first; b; b = b->next)
         if (!b->free)
             *used += b->size;
     *mapped = heap_end - HEAP_START;
+    irq_restore(flags);
 }
