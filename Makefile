@@ -12,6 +12,7 @@ C_SRCS = src/kernel/kernel.c \
          src/kernel/kprintf.c \
          src/kernel/multiboot.c \
          src/kernel/shell.c \
+         src/kernel/thread.c \
          src/lib/string.c \
          src/mm/heap.c \
          src/mm/paging.c \
@@ -23,7 +24,8 @@ C_SRCS = src/kernel/kernel.c \
          drivers/timer/timer.c \
          drivers/vga/vga.c
 ASM_SRCS = src/arch/boot.s \
-           src/arch/interrupts.s
+           src/arch/interrupts.s \
+           src/arch/switch.s
 OBJS = $(ASM_SRCS:.s=.o) $(C_SRCS:.c=.o)
 DEPS = $(C_SRCS:.c=.d)
 

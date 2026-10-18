@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "vga.h"
 #include "io.h"
+#include "irq.h"
 
 #define VGA_MEMORY ((volatile uint16_t*)0xB8000)
 #define VGA_WIDTH  80
@@ -30,12 +31,14 @@ static void vga_update_cursor(void) {
 }
 
 void vga_clear(void) {
+    uint32_t flags = irq_save();
     for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++)
         VGA_MEMORY[i] = vga_entry(' ');
 
     row = 0;
     col = 0;
     vga_update_cursor();
+    irq_restore(flags);
 }
 
 void vga_init(void) {
@@ -83,15 +86,20 @@ static void vga_put_char(char c) {
     }
 }
 
+/* The cursor position is shared state, so output runs with interrupts off. */
 void vga_putc(char c) {
+    uint32_t flags = irq_save();
     vga_put_char(c);
     vga_update_cursor();
+    irq_restore(flags);
 }
 
 void vga_print(const char* str) {
+    uint32_t flags = irq_save();
     while (*str) {
         vga_putc(*str++);
     }
+    irq_restore(flags);
 }
 
 void vga_print_hex(uint32_t value) {

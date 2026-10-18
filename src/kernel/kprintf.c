@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "kprintf.h"
 #include "vga.h"
+#include "irq.h"
 
 static void print_number(uint32_t value, unsigned base, int negative, int width, char pad) {
     static const char digits[] = "0123456789abcdef";
@@ -31,6 +32,8 @@ static void print_number(uint32_t value, unsigned base, int negative, int width,
 void kprintf(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
+    /* Print the whole message at once, so output from different threads does not interleave. */
+    uint32_t flags = irq_save();
 
     for (; *fmt; fmt++) {
         if (*fmt != '%') {
@@ -88,5 +91,6 @@ void kprintf(const char* fmt, ...) {
         }
     }
 
+    irq_restore(flags);
     va_end(args);
 }
