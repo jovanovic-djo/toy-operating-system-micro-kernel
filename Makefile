@@ -12,6 +12,7 @@ OBJCOPY = objcopy
 C_SRCS = src/kernel/kernel.c \
          src/kernel/kprintf.c \
          src/kernel/multiboot.c \
+         src/kernel/process.c \
          src/kernel/programs.c \
          src/kernel/shell.c \
          src/kernel/syscall.c \
@@ -28,7 +29,8 @@ C_SRCS = src/kernel/kernel.c \
          drivers/vga/vga.c
 ASM_SRCS = src/arch/boot.s \
            src/arch/interrupts.s \
-           src/arch/switch.s
+           src/arch/switch.s \
+           src/arch/usermode.s
 
 # User programs: each is linked at USER_START with the small runtime in user/,
 # turned into a flat binary and embedded in the kernel by user/programs.s.
