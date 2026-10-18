@@ -57,3 +57,4 @@ dkms.conf
 # Build output
 build/
 iso/boot/kernel.bin
+user/*.bin
