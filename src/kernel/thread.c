@@ -3,35 +3,42 @@
 #include "thread.h"
 #include "heap.h"
 #include "irq.h"
-#include "kprintf.h"
+#include "timer.h"
 
 #define STACK_SIZE 16384
+#define SLICE_MS   50 /* time a thread runs before the timer switches away */
 
 void context_switch(uint32_t* old_esp, uint32_t new_esp); /* switch.s */
 
 static struct thread boot_thread;
+static struct thread* idle_thread;
 static struct thread* current;
 static uint32_t next_id;
+static uint32_t slice_ticks;
 
 struct thread* thread_current(void) {
     return current;
 }
 
-/* Switch to the next ready thread after the current one. Interrupts must be off. */
+/* The next ready thread after the current one; the idle thread only when nothing else can run. */
+static struct thread* pick_next(void) {
+    for (struct thread* t = current->next; t != current; t = t->next)
+        if (t->state == THREAD_READY && t != idle_thread)
+            return t;
+
+    if (current->state == THREAD_RUNNING && current != idle_thread)
+        return current;
+    return idle_thread;
+}
+
+/* Switch to the next thread. Interrupts must be off. */
 static void schedule(void) {
     struct thread* prev = current;
-    struct thread* next = prev->next;
+    struct thread* next = pick_next();
 
-    while (next != prev && next->state != THREAD_READY)
-        next = next->next;
-
-    if (next == prev) {
-        if (prev->state == THREAD_RUNNING)
-            return; /* nothing else to run */
-        kprintf("thread: no thread left to run\n");
-        for (;;)
-            __asm__ volatile ("cli; hlt");
-    }
+    slice_ticks = 0;
+    if (next == prev)
+        return;
 
     if (prev->state == THREAD_RUNNING)
         prev->state = THREAD_READY;
@@ -47,12 +54,27 @@ static void thread_start(void) {
     thread_exit();
 }
 
+static void idle(void* arg) {
+    (void)arg;
+    for (;;)
+        __asm__ volatile ("hlt");
+}
+
+/* Runs in the timer interrupt, so interrupts are already off. */
+static void thread_tick(void) {
+    if (++slice_ticks >= SLICE_MS * TIMER_HZ / 1000)
+        schedule();
+}
+
 void threads_init(void) {
     boot_thread.id = next_id++;
     boot_thread.name = "kernel";
     boot_thread.state = THREAD_RUNNING;
     boot_thread.next = &boot_thread;
     current = &boot_thread;
+
+    idle_thread = thread_create("idle", idle, NULL);
+    timer_set_tick_handler(thread_tick);
 }
 
 struct thread* thread_create(const char* name, void (*entry)(void* arg), void* arg) {

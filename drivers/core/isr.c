@@ -91,9 +91,14 @@ void isr_dispatch(struct registers* regs) {
         uint8_t irq = regs->int_no - IRQ_BASE;
         if (pic_is_spurious(irq))
             return;
+        /*
+         * Acknowledge first: a handler may switch to another thread and not
+         * return here for a while, and the PIC holds back lower-priority IRQs
+         * until it gets the EOI. Interrupts stay off until iret either way.
+         */
+        pic_send_eoi(irq);
         if (handler)
             handler(regs);
-        pic_send_eoi(irq);
         return;
     }
 

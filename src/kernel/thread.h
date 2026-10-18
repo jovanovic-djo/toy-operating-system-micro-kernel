@@ -20,7 +20,10 @@ struct thread {
     struct thread* next;       /* circular list of all threads */
 };
 
-/* Turn the code running kernel_main into thread 0. Call after the heap is usable. */
+/*
+ * Turn the code running kernel_main into thread 0, start the idle thread and
+ * preempt threads from the timer. Call after the heap is usable.
+ */
 void threads_init(void);
 
 /* Start entry(arg) in a new thread. Returns NULL when out of memory. */

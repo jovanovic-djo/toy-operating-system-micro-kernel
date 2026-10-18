@@ -11,10 +11,17 @@
 #define TIMER_IRQ     0
 
 static volatile uint32_t ticks = 0;
+static void (*tick_handler)(void);
 
 static void timer_handler(struct registers* regs) {
     (void)regs;
     ticks++;
+    if (tick_handler)
+        tick_handler();
+}
+
+void timer_set_tick_handler(void (*fn)(void)) {
+    tick_handler = fn;
 }
 
 void timer_init(void) {
