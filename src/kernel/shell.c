@@ -6,6 +6,9 @@
 #include "timer.h"
 #include "vga.h"
 #include "io.h"
+#include "multiboot.h"
+#include "pmm.h"
+#include "heap.h"
 
 #define PROMPT      "~: "
 #define LINE_MAX    128
@@ -24,6 +27,7 @@ static void cmd_help(const char* args);
 static void cmd_clear(const char* args);
 static void cmd_echo(const char* args);
 static void cmd_uptime(const char* args);
+static void cmd_mem(const char* args);
 static void cmd_reboot(const char* args);
 
 static const struct command commands[] = {
@@ -31,6 +35,7 @@ static const struct command commands[] = {
     { "clear",  "clear the screen",        cmd_clear },
     { "echo",   "print the given text",    cmd_echo },
     { "uptime", "time since boot",         cmd_uptime },
+    { "mem",    "show the memory map",     cmd_mem },
     { "reboot", "restart the machine",     cmd_reboot },
 };
 
@@ -55,6 +60,17 @@ static void cmd_uptime(const char* args) {
     (void)args;
     uint32_t ticks = timer_ticks();
     kprintf("%u.%02u s\n", ticks / TIMER_HZ, ticks % TIMER_HZ * 100 / TIMER_HZ);
+}
+
+static void cmd_mem(const char* args) {
+    (void)args;
+    multiboot_print_memory_map();
+    kprintf("%u of %u pages free (%u KiB)\n",
+            pmm_free_pages(), pmm_total_pages(), pmm_free_pages() * (PAGE_SIZE / 1024));
+
+    uint32_t used, mapped;
+    heap_stats(&used, &mapped);
+    kprintf("heap: %u bytes in use, %u KiB mapped\n", used, mapped / 1024);
 }
 
 static void cmd_reboot(const char* args) {
