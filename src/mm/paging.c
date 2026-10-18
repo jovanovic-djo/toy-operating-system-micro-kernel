@@ -3,8 +3,10 @@
 #include "pmm.h"
 #include "kprintf.h"
 #include "string.h"
+#include "layout.h"
 
 #define ENTRIES      1024
+#define TABLE_SPAN   (ENTRIES * PAGE_SIZE) /* 4 MiB covered by one page table */
 #define CR0_PAGING   0x80000000
 #define ADDR_MASK    0xFFFFF000
 
@@ -53,6 +55,17 @@ void paging_init(void) {
 
     for (uint32_t addr = PAGE_SIZE; addr < end; addr += PAGE_SIZE) {
         if (!paging_map(addr, addr, PAGE_WRITE)) {
+            kprintf("paging: out of memory for page tables, staying unpaged\n");
+            return;
+        }
+    }
+
+    /*
+     * Create the heap's page tables now, so later page directories can share
+     * them by copying the kernel's directory entries once.
+     */
+    for (uint32_t addr = HEAP_START; addr < HEAP_END; addr += TABLE_SPAN) {
+        if (!page_table(addr)) {
             kprintf("paging: out of memory for page tables, staying unpaged\n");
             return;
         }

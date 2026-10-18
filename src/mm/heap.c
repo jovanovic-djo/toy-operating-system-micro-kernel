@@ -5,10 +5,7 @@
 #include "pmm.h"
 #include "kprintf.h"
 #include "irq.h"
-
-/* Virtual range for the heap, above the identity-mapped RAM. */
-#define HEAP_START 0xE0000000
-#define HEAP_LIMIT 0xF0000000
+#include "layout.h"
 
 #define ALIGN        16
 #define BLOCK_MAGIC  0x4B4D454D /* "MEMK" */
@@ -39,18 +36,13 @@ static struct block* grow(uint32_t size) {
     uint32_t start = heap_end;
     uint32_t needed = (last && last->free) ? size - last->size : size + HEADER;
 
-    if (pmm_memory_end() > HEAP_START) {
-        kprintf("heap: RAM overlaps the heap address range\n");
-        return NULL;
-    }
-
     /* Fail early rather than tie up all free RAM in a heap that still cannot fit the request. */
     uint32_t pages = (needed + PAGE_SIZE - 1) / PAGE_SIZE;
-    if (pages > (HEAP_LIMIT - heap_end) / PAGE_SIZE || pages + pages / 1024 + 1 > pmm_free_pages())
+    if (pages > (HEAP_END - heap_end) / PAGE_SIZE || pages + pages / 1024 + 1 > pmm_free_pages())
         return NULL;
 
     while (heap_end - start < needed) {
-        uint32_t page = heap_end < HEAP_LIMIT ? pmm_alloc_page() : 0;
+        uint32_t page = heap_end < HEAP_END ? pmm_alloc_page() : 0;
         if (!page)
             break;
         if (!paging_map(heap_end, page, PAGE_WRITE)) {
@@ -95,7 +87,7 @@ static void split(struct block* b, uint32_t size) {
 }
 
 static void* heap_alloc(size_t size) {
-    if (size == 0 || size > HEAP_LIMIT - HEAP_START)
+    if (size == 0 || size > HEAP_END - HEAP_START)
         return NULL;
     size = (size + ALIGN - 1) & ~(ALIGN - 1);
 

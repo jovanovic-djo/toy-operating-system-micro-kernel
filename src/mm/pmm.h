@@ -13,7 +13,7 @@ uint32_t pmm_alloc_page(void);
 void pmm_free_page(uint32_t addr);
 
 uint32_t pmm_free_pages(void);
-uint32_t pmm_total_pages(void); /* usable RAM below 4 GiB, in pages */
-uint32_t pmm_memory_end(void);  /* end of the highest usable page, at most 0xFFFFF000 */
+uint32_t pmm_total_pages(void); /* usable RAM below KERNEL_MEMORY_END, in pages */
+uint32_t pmm_memory_end(void);  /* end of the highest usable page */
 
 #endif

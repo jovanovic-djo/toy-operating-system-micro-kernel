@@ -4,14 +4,15 @@
 #include "kprintf.h"
 #include "string.h"
 #include "irq.h"
+#include "layout.h"
 
 #define PAGE_SHIFT 12
-#define MAX_PAGES  (1u << 20) /* 4 GiB / 4 KiB */
+#define MAX_PAGES  (KERNEL_MEMORY_END / PAGE_SIZE)
 #define LOW_MEMORY 0x100000   /* BIOS, VGA and bootloader data live below 1 MiB */
 
 extern char _kernel_start[], _kernel_end[]; /* from linker.ld */
 
-/* One bit per page below 4 GiB; a set bit means used or not RAM. */
+/* One bit per page the kernel can use; a set bit means used or not RAM. */
 static uint32_t bitmap[MAX_PAGES / 32];
 static uint32_t free_count, total_count;
 static uint64_t memory_end;
@@ -132,5 +133,5 @@ uint32_t pmm_total_pages(void) {
 }
 
 uint32_t pmm_memory_end(void) {
-    return memory_end > 0xFFFFF000 ? 0xFFFFF000 : (uint32_t)memory_end;
+    return memory_end;
 }

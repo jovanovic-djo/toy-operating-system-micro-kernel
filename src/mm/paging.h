@@ -7,8 +7,8 @@
 #define PAGE_WRITE   0x2
 
 /*
- * Identity-map all RAM except page 0 (so NULL dereferences fault) and turn
- * paging on. Call after pmm_init.
+ * Identity-map the kernel's RAM except page 0 (so NULL dereferences fault),
+ * create the heap's page tables and turn paging on. Call after pmm_init.
  */
 void paging_init(void);
 
