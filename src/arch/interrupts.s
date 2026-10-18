@@ -30,14 +30,29 @@ isr\num:
 
 .extern isr_dispatch
 
-# C functions may clobber eax/ecx/edx and expect DF clear,
-# so save all general registers and return with iret.
+# C functions may clobber eax/ecx/edx and expect DF clear, so save all
+# general registers. An interrupt from user mode arrives with user data
+# segments loaded, so save DS and switch to the kernel's for the handler.
 isr_common:
     pusha
+    mov %ds, %eax
+    push %eax
+    mov $0x10, %ax          # GDT_KERNEL_DATA
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
     cld
+
     push %esp               # struct registers *
     call isr_dispatch
     add $4, %esp
+
+    pop %eax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
     popa
     add $8, %esp            # drop vector number and error code
     iret
